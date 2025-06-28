@@ -107,6 +107,16 @@ inline std::string hidlVec2String(const ::keystore::hidl_vec<uint8_t>& value) {
     return std::string(reinterpret_cast<const std::string::value_type*>(&value[0]), value.size());
 }
 
+inline std::vector<uint8_t> hexString2Byte(const std::string& string) {
+    std::vector<uint8_t> bytes;
+    for (size_t i = 0; i < string.length(); i += 2) {
+        std::string byteString = string.substr(i, 2);
+        uint8_t byte = static_cast<uint8_t>(std::stoul(byteString, nullptr, 16));
+        bytes.push_back(byte);
+    }
+    return bytes;
+}
+
 static bool lookup_ref_key_internal(std::map<userid_t, UserPolicies> key_map, const uint8_t* policy, userid_t* user_id) {
 #ifdef USE_FSCRYPT_POLICY_V1
 	char policy_string_hex[FS_KEY_DESCRIPTOR_SIZE_HEX];
@@ -699,7 +709,7 @@ bool Free_Return(bool retval, void* weaver_key, password_data_struct* pwd) {
 bool Decrypt_CE_storage(const userid_t user_id, const std::string& secret) {
 	printf("Attempting to unlock user storage\n");
 	int flags = android::os::IVold::STORAGE_FLAG_CE;
-	if (!fscrypt_unlock_ce_storage(user_id, secret)) {
+	if (!fscrypt_unlock_ce_storage(user_id, hexString2Byte(secret))) {
 		printf("fscrypt_unlock_ce_storage returned fail\n");
 		return false;
 	}
